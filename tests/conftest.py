@@ -3,6 +3,7 @@ import pytest
 from selenium import webdriver
 from . import config, credentials
 
+
 def pytest_addoption(parser):
     parser.addoption(
         '--baseurl',
@@ -25,18 +26,20 @@ def pytest_addoption(parser):
     parser.addoption(
         '--browserversion',
         action='store',
-        default='96.0',
+        default='119.0',
         help='Versão do browser'
     )
     parser.addoption(
         '--platform',
         action='store',
-        default='Windows 10',
+        default='Windows 11',
         help='Sistema Operacional a ser utilizado durante os testes (apenas no saucelabs)'
     )
 
+
 @pytest.fixture
-def driver(request): # Inicialização dos testes - similar a um Before / Setup
+def driver(request):  # Inicialização dos testes - similar a um Before / Setup
+    global driver_
     config.baseurl = request.config.getoption('--baseurl')
     config.host = request.config.getoption('--host')
     config.browser = request.config.getoption('--browser')
@@ -44,7 +47,7 @@ def driver(request): # Inicialização dos testes - similar a um Before / Setup
     config.platform = request.config.getoption('--platform')
 
     if config.host == 'saucelabs':
-        test_name = request.node.name #nome do teste
+        test_name = request.node.name  # nome do teste
         capabilities = {
             'browserName': config.browser,
             'browserVersion': config.browserversion,
@@ -53,14 +56,14 @@ def driver(request): # Inicialização dos testes - similar a um Before / Setup
                 'name': test_name
             }
         }
-        #_credentials = os.environ['InstrutorIterasys06'] + ':' + os.environ['1ac20078-c9c4-44ce-afe5-a153f7c83aa2']
+        # _credentials = os.environ['InstrutorIterasys06'] + ':' + os.environ['1ac20078-c9c4-44ce-afe5-a153f7c83aa2']
 
         _credentials = credentials.SAUCE_USERNAME + ':' + credentials.SAUCE_ACCESS_KEY
         _url = 'https://' + _credentials + '@ondemand.us-west-1.saucelabs.com:443/wd/hub'
-        #_url = 'https://InstrutorIterasys06:1ac20078-c9c4-44ce-afe5-a153f7c83aa2@ondemand.us-west-1.saucelabs.com:443/wd/hub'
+        # _url = 'https://InstrutorIterasys06:1ac20078-c9c4-44ce-afe5-a153f7c83aa2@ondemand.us-west-1.saucelabs.com:443/wd/hub'
 
         driver_ = webdriver.Remote(_url, capabilities)
-    else: # execução local / localhost
+    else:  # execução local / localhost
         if config.browser == 'chrome':
             _chromedriver = os.path.join(os.getcwd(), 'vendor', 'chromedriver.exe')
             if os.path.isfile(_chromedriver):
@@ -74,7 +77,7 @@ def driver(request): # Inicialização dos testes - similar a um Before / Setup
             else:
                 driver_ = webdriver.Firefox()
 
-    def quit(): # Finalização dos testes - similar ao After ou TearDown
+    def quit():  # Finalização dos testes - similar ao After ou TearDown
         # sinalização de passou ou falhou conforme o retorno da requisição
         sauce_result = 'failed' if request.node.rep_call.failed else 'passed'
         driver_.execute_script('sauce:job-result={}'.format(sauce_result))
@@ -83,7 +86,8 @@ def driver(request): # Inicialização dos testes - similar a um Before / Setup
     request.addfinalizer(quit)
     return driver_
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True) # Implementação do gatilho de comunicação com SL
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)  # Implementação do gatilho de comunicação com SL
 def pytest_runtest_makereport(item, call):
     # parametros para geração do relatório / informações dos resultados
     outcome = yield
